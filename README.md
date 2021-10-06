@@ -1,5 +1,4 @@
-### Taylor J. Weidman
-Email. taylorjweidman@gmail.com | Website. https://taylorjweidman.com
+### Taylor J. Weidman | taylorjweidman@gmail.com | https://taylorjweidman.com
 
 # Voter Data Pipeline
 
