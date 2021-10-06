@@ -1,10 +1,5 @@
 from base_imports import *
 
-#import googlemaps
-#import pyzillow.pyzillow as pyz
-# gmaps = googlemaps.Client(key="AIzaSyCQzidXwUsEfh_lN3KvP9A8cLPBUuD3OvQ")
-# zillow_data = pyz.ZillowWrapper('X1-ZWz1gt85cpioej_76gmj')
-
     
 
 
