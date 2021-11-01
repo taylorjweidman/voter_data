@@ -19,10 +19,10 @@ def proximity_matrix(SNd, year, print_log, state = state, meters = meters):
     with open(path_3 + 'POPd_' + str(year) + '_' + str(meters) + 'm.pkl','rb') as f: 
         POPd = pickle.load(f)
     
-    if 'Pd_' + file_desc in os.listdir(path_4):
+    if 'Pd_' + file_desc in os.listdir(path_4 + 'Pd'):
         print_log[data_name]['sublog'] = ['   || Loading Pd']
         printer(print_log)
-        with open(path_4 + 'Pd_' + file_desc,'rb') as f: 
+        with open(path_4 + 'Pd/Pd_' + file_desc,'rb') as f: 
             Pd = pickle.load(f)
     
     else:
@@ -58,7 +58,7 @@ def proximity_matrix(SNd, year, print_log, state = state, meters = meters):
                 print_log[data_name]['sublog'] = ['   || Proximity: '+str(round(100*len(Pd)/len(SNd),3))+'%']
                 printer(print_log)
         
-        with open(path_4+'/Pd_' + file_desc,'wb') as f:
+        with open(path_4+'/Pd/Pd_' + file_desc,'wb') as f:
             pickle.dump(Pd, f)
     
     print_log[data_name]['sublog'] = []
