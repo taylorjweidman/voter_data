@@ -1,6 +1,5 @@
 from base_imports import *
 
-meters = 2000
 keep_cols = ['idu', 'lat', 'lon', 'party', 'race', 'status']
 
                 
@@ -115,42 +114,57 @@ def adjacency_matrix(Lats, Lons, data_name, print_log, path_3):
     return Ad, LLd, Cd
 
 
-def foursquare(four):
-    """ Divide an input square neighborhood into (up to) four output square neighborhoods, optimizing the populate_squares function to run in n log_2(n) time. """
+def cut_in_half(four, ll_key):
+    """ Cut ll_key dimension in half. """
     
+    LL_four_list = []
+    
+    """ Setup input data. """
     data, LLd = four['N'], four['LLd']
-    W = [LLd[i]['lon_l'] for i in LLd]
-    if len(W) > 1:
-        w_median = sorted(W)[len(W)//2]
-        w_min = min(W)
-        w_max = max(W)
-        W_four_list = [
-            {'N':data[(data.lon < w_median) & (data.lon >= w_min)],
-             'LLd':{i:LLd[i] for i in LLd if LLd[i]['lon_u'] <= w_median}},
-            {'N':data[(data.lon >= w_median) & (data.lon <= w_max)],
-             'LLd':{i:LLd[i] for i in LLd if LLd[i]['lon_l'] >= w_median}} 
-        ]
-    else:
-        W_four_list = [four]
+    LL = [LLd[i][ll_key+'_l'] for i in LLd] + [LLd[i][ll_key+'_u'] for i in LLd]
+    LL = list(set(LL))
+    ll_median = sorted(LL)[len(LL)//2]
+    ll_min, ll_max = min(LL), max(LL)
 
+    """ Select lower half. """
+    LL_four_list.append({
+        'N':data[(ll_min <= data[ll_key]) & (data[ll_key] < ll_median)],
+        'LLd':{i:LLd[i] for i in LLd if LLd[i][ll_key+'_u'] <= ll_median}
+    })
+    """ Select upper half. """
+    LL_four_list.append({
+        'N':data[(ll_median <= data[ll_key]) & (data[ll_key] <= ll_max)],
+        'LLd':{i:LLd[i] for i in LLd if ll_median <= LLd[i][ll_key+'_l']}
+    })
+    
+    return LL_four_list
+
+
+def foursquare(four):
+    """ 
+    Divide an input square neighborhood into (up to) four output square neighborhoods.
+    This method optimizes the populate_squares function to run in n log_2(n) time. 
+    """
+    
+    """ Width (lon) """
+    W_four_list = []
+
+    """ Cut width (lon) in half. """
+    if len(four['LLd']) > 1:
+        W_four_list = W_four_list + cut_in_half(four, 'lon')
+    else:
+        W_four_list.append(four)
+    
+    """ Height (lat) """
     H_four_list = []
     for four in W_four_list:
-        data, LLd = four['N'], four['LLd']
-        H = [LLd[i]['lat_l'] for i in LLd]
-        if len(H) > 1:
-            h_median = sorted(H)[len(H)//2]
-            h_min = min(H)
-            h_max = max(H)
-            H_four_list.append({
-                'N':data[(data.lat < h_median) & (data.lat >= h_min)],
-                'LLd':{i:LLd[i] for i in LLd if LLd[i]['lat_u'] <= h_median}
-            })
-            H_four_list.append({
-                'N':data[(data.lat >= h_median) & (data.lat <= h_max)],
-                'LLd':{i:LLd[i] for i in LLd if LLd[i]['lat_l'] >= h_median}
-            })
+
+        """ Cut height (lat) in half. """
+        if len(four['LLd']) > 1:
+            H_four_list = H_four_list + cut_in_half(four, 'lat')
         else:
             H_four_list.append(four)
+    
     return H_four_list
 
 
@@ -192,16 +206,16 @@ def populate_squares(data, LLd, print_log, data_name, meters, demographics = Fal
             n.loc[:,'sn_i'] = index
             POPd[index] = len(n)
             
-            #if demographics:
-            #    n['M_'+str(meters)+'m'] = sum((n.gender == 'M')*1)
-            #    n['F_'+str(meters)+'m'] = sum((n.gender == 'F')*1)
-            #    n['BLACK_'+str(meters)+'m'] = sum((n.race == 'BLACK or AFRICAN AMERICAN')*1)
-            #    n['WHITE_'+str(meters)+'m'] = sum((n.race == 'WHITE')*1)
-            #    n['OTHER_'+str(meters)+'m'] = sum((~n.race.isin(['BLACK or AFRICAN AMERICAN','WHITE']))*1)
-            #    n['D_'+str(meters)+'m'] = n.D.sum()
-            #    n['R_'+str(meters)+'m'] = n.R.sum()
-            #    n['O_'+str(meters)+'m'] = n.O.sum()
-            #    n['MEAN_AGE_'+str(meters)+'m'] = n.age.astype(float).mean()
+            if demographics:
+                n['M_'+str(meters)+'m'] = sum((n.gender == 'M')*1)
+                n['F_'+str(meters)+'m'] = sum((n.gender == 'F')*1)
+                n['BLACK_'+str(meters)+'m'] = sum((n.race == 'BLACK or AFRICAN AMERICAN')*1)
+                n['WHITE_'+str(meters)+'m'] = sum((n.race == 'WHITE')*1)
+                n['OTHER_'+str(meters)+'m'] = sum((~n.race.isin(['BLACK or AFRICAN AMERICAN','WHITE']))*1)
+                n['D_'+str(meters)+'m'] = n.D.sum()
+                n['R_'+str(meters)+'m'] = n.R.sum()
+                n['O_'+str(meters)+'m'] = n.O.sum()
+                n['MEAN_AGE_'+str(meters)+'m'] = n.age.astype(float).mean()
             
             SNd[index] = n
             
@@ -214,3 +228,45 @@ def populate_squares(data, LLd, print_log, data_name, meters, demographics = Fal
     printer(print_log)
     
     return SNd, POPd
+
+
+##########################
+
+
+def foursquare_old(four):
+    """ Divide an input square neighborhood into (up to) four output square neighborhoods, optimizing the populate_squares function to run in n log_2(n) time. """
+    
+    data, LLd = four['N'], four['LLd']
+    W = [LLd[i]['lon_l'] for i in LLd]
+    if len(W) > 1:
+        w_median = sorted(W)[len(W)//2]
+        w_min = min(W)
+        w_max = max(W)
+        W_four_list = [
+            {'N':data[(data.lon < w_median) & (data.lon >= w_min)],
+             'LLd':{i:LLd[i] for i in LLd if LLd[i]['lon_u'] <= w_median}},
+            {'N':data[(data.lon >= w_median) & (data.lon <= w_max)],
+             'LLd':{i:LLd[i] for i in LLd if LLd[i]['lon_l'] >= w_median}} 
+        ]
+    else:
+        W_four_list = [four]
+
+    H_four_list = []
+    for four in W_four_list:
+        data, LLd = four['N'], four['LLd']
+        H = [LLd[i]['lat_l'] for i in LLd]
+        if len(H) > 1:
+            h_median = sorted(H)[len(H)//2]
+            h_min = min(H)
+            h_max = max(H)
+            H_four_list.append({
+                'N':data[(data.lat < h_median) & (data.lat >= h_min)],
+                'LLd':{i:LLd[i] for i in LLd if LLd[i]['lat_u'] <= h_median}
+            })
+            H_four_list.append({
+                'N':data[(data.lat >= h_median) & (data.lat <= h_max)],
+                'LLd':{i:LLd[i] for i in LLd if LLd[i]['lat_l'] >= h_median}
+            })
+        else:
+            H_four_list.append(four)
+    return H_four_list

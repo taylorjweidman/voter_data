@@ -1,13 +1,12 @@
 from base_imports import *
 
-def knn_col_names():
+def knn_col_names(extras=[]):
     """ Generate column names for knn statistics. """
     
     names = ['idu'] + [party+'0' for party in party_list]
     for k in k_list:
-        for party in party_list:
-            names.append(party+str(k))
-        names += [str(k)+'_lat',str(k)+'_lon',str(k)+'_dist']
+        names += [party+str(k) for party in party_list]
+        names += [extra+str(k) for extra in extras]
     return names
 
 
@@ -57,6 +56,9 @@ def proximity_matrix(SNd, year, print_log, state = state, meters = meters):
             if len(Pd)%100 == 0:
                 print_log[data_name]['sublog'] = ['   || Proximity: '+str(round(100*len(Pd)/len(SNd),3))+'%']
                 printer(print_log)
+                
+        print_log[data_name]['sublog'] = ['   || Proximity: '+str(round(100*len(Pd)/len(SNd),3))+'%']
+        printer(print_log)
         
         with open(path_4+'/Pd/Pd_' + file_desc,'wb') as f:
             pickle.dump(Pd, f)
@@ -65,36 +67,6 @@ def proximity_matrix(SNd, year, print_log, state = state, meters = meters):
     printer(print_log)
     
     return Pd, POPd
-
-
-#def distance(x,y):
-#    """ Take two dictionaries and measure the distance between their lat lon combinations in meters. """
-    
-#    x_lat, x_lon = float(x['lat']), float(x['lon'])
-#    y_lat, y_lon = float(y['lat']), float(y['lon'])
-    
-#    R = 6371000 # meters
-    
-#    lat1,lat2 = math.radians(x_lat),math.radians(y_lat)
-#    latdif = math.radians(y_lat-x_lat)
-#    londif = math.radians(y_lon-x_lon)
-#    a = math.sin(latdif/2) * math.sin(latdif/2) + math.cos(lat1) * math.cos(lat2) * math.sin(londif/2) * math.sin(londif/2)
-#    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-#    return R*c
-
-
-#def distance_matrix_(n, N): 
-#    """Return a matrix of distances between every voter in n1 and every voter in n2"""
-#    """ Is my slow handwritten code: 0.0016806126 sec vs 2.4040441513 sec. """
-    
-#    for vi,v in n.iterrows():
-#        v_pair = {'lat':v.lat, 'lon':v.lon}
-#        D.loc[v.idu] = [distance(v_pair,{'lat':V.lat, 'lon':V.lon}) for Vi,V in N.iterrows()] # Vectorize this?
-        
-#    return pd.DataFrame(D)
-
-
-
 
 
 
